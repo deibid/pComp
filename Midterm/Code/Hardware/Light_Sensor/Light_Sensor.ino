@@ -28,6 +28,7 @@ void loop() {
   if (loopCount % loopSampleRate == 0) {
     
     int lightValue1 = analogRead(LIGHT_SENSOR_1);
+    Serial.println(lightValue1);
 
     if (lightValue1 > LIGHT_INTENSITY_THRESHOLD) {
       
@@ -37,7 +38,7 @@ void loop() {
       if(accumulator > 0) accumulator--;
     }
 
-    Serial.println(accumulator);
+//    Serial.println(accumulator);
     loopCount = 0;
   }
 

@@ -1,3 +1,20 @@
+/**
+ * RGBOP Game
+ */
+
+
+
+/*
+Hardware stuff
+*/
+
+let mSerial;
+let mData;
+
+const PORT_NAME_PREFIX = "usbmodem";
+
+
+
 
 
 let mSprite;
@@ -9,9 +26,18 @@ let mWallTop;
 let mWallBottom;
 
 // 
-let mColors = ["#F57F22","#E5043A","#3A75C4","#007A3D","#D8DDCD","#FFED38"];
+// let mColors = ["#3d5afe","#00c853","#d50000","#ffff00","#aa00ff","#FFED38"];
 let mCurrentSpriteColor = 0;
 
+let ColorEnum = {
+    "193734413":"#3d5afe",
+    "193744413":"#00c853",
+    "2091904413":"#d50000",
+    "2091914413":"#ffff00",
+    "1451104413":"#aa00ff",
+    "1451094413":"#18ffff"};
+
+Object.freeze(ColorEnum);
 
 
 //intro, playing, win, lose
@@ -19,8 +45,23 @@ let mGameState;
 let StateEnum = {"intro":1,"playing":2,"win":3,"lose":4};
 Object.freeze(StateEnum);
 
+let CommandEnum = {"rfid":"tagId","light1":"light1","light2":"light2","pot":"pot"};
+Object.freeze(CommandEnum);
+
+
+
+
+
 function setup(){
     
+    
+
+    mSerial = new p5.SerialPort();
+    mSerial.on('list',getPortList);
+    mSerial.on('data',serialEvent);
+
+
+
     mGameState = StateEnum.intro;
     rectMode(CENTER);
     createCanvas(windowWidth,windowHeight);
@@ -53,6 +94,58 @@ function draw(){
 }
 
 
+function getPortList(ports){
+    
+    
+    let arduinoPort = ports.filter(port => port.includes(PORT_NAME_PREFIX));
+    mSerial.open(arduinoPort);
+
+}
+
+function serialEvent(){
+
+
+
+    //tag          tagId:#
+    //pot values   pot:#
+    //light1       light1:#
+    //light2       light2:#
+    
+    
+    mData = mSerial.readLine();
+    if(mData.length === 0)return;
+    if(!mData.includes(":"))return;
+
+    // console.log("mData "+mData);
+    
+    let command = mData.split(":")[0];
+    let value = mData.split(":")[1];
+
+    // console.log("COMMAND:::"+command);
+
+    switch(command){
+
+        case CommandEnum.rfid:
+            // console.log("RFID: "+value);
+            changeColor(value);
+        break;
+        
+        case CommandEnum.light1:
+            // console.log("Light1: "+value);
+        break;
+
+        case CommandEnum.light2:
+            // console.log("Light2: "+value);
+        break;
+
+        case CommandEnum.pot:
+            // console.log("Pot: "+value);
+        break;
+
+    }
+
+}
+
 
 function initializeSketch(){
     
@@ -62,7 +155,7 @@ function initializeSketch(){
     
     mSprite = createSprite(200,windowHeight/2,20,20);
     mSprite.setDefaultCollider();
-    mSprite.shapeColor = mColors[mCurrentSpriteColor];
+    mSprite.shapeColor = getRandomColorFromEnum();
     
 
     mWallManager = new WallManager();
@@ -108,7 +201,7 @@ function Wall(speed){
     this.wall = createSprite(windowWidth,windowHeight/2,20,windowHeight);
     this.wall.velocity.x = speed;
     this.wall.shapeColor = "#1E1E1E";
-    this.gateColor = mColors[getRandomInt(mColors.length)];
+    this.gateColor = getRandomColorFromEnum();
     this.gateHeight = 100;
     this.gateYPos = this.generateRandomGatePosition();
     this.gate = createSprite(windowWidth,this.gateYPos/2,25,this.gateHeight);
@@ -332,15 +425,15 @@ function getRandomInt(max) {
         break;
 
         // 'd'
-        case 68:
-            mCurrentSpriteColor++;
+        // case 68:
+        //     mCurrentSpriteColor++;
             
-            if(mCurrentSpriteColor === mColors.length)
-                mCurrentSpriteColor = 0;
+        //     if(mCurrentSpriteColor === mColors.length)
+        //         mCurrentSpriteColor = 0;
 
-            mSprite.shapeColor = mColors[mCurrentSpriteColor];
+        //     mSprite.shapeColor = mColors[mCurrentSpriteColor];
 
-        break;
+        // break;
         
     }
 
@@ -362,3 +455,28 @@ function getRandomInt(max) {
   
 
   
+function changeColor(tagIdValue){
+
+
+    let color = ColorEnum[tagIdValue];
+
+    console.log("COLOR VALUEEEEEE "+color);
+    mSprite.shapeColor = color;
+
+}
+
+
+
+function getRandomColorFromEnum(){
+
+    Object.keys(ColorEnum).forEach(key=>{
+        console.log("KEY: "+key);
+    })
+    
+    let keys = Object.keys(ColorEnum);
+    let index = getRandomInt(keys.length);
+
+    return ColorEnum[keys[index]];
+    
+
+}
