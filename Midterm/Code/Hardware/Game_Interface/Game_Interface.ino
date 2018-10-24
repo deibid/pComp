@@ -32,8 +32,8 @@ String prevTagId = "";
 const int LIGHT_SENSOR_1 = A0;
 const int LIGHT_SENSOR_2 = A1;
 
-const int LIGHT_INTENSITY_THRESHOLD = 20;
-const int LIGHT_MAX_ACCUMULATION = 500;
+const int LIGHT_INTENSITY_THRESHOLD = 150;
+const int LIGHT_MAX_ACCUMULATION = 100;
 
 int loopCount = 0;
 int loopSampleRate = 1;
@@ -47,14 +47,14 @@ unsigned long accumulatorLight2 = 0;
 
 
 /**
- * Potentiometer variables
- */
+   Potentiometer variables
+*/
 
 int POTENTIOMETER = A2;
 
 /**
- * Potentiometer variables
- */
+   Potentiometer variables
+*/
 
 
 
@@ -70,7 +70,7 @@ void setup() {
   setupLightSensors();
   setupPotentiometer();
 
-  
+
 
 }
 
@@ -86,7 +86,7 @@ void loop() {
 
 
 
-void setupRFID(){
+void setupRFID() {
 
   SPI.begin();
 
@@ -100,17 +100,17 @@ void setupRFID(){
 }
 
 
-void setupLightSensors(){
+void setupLightSensors() {
 
-  pinMode(LIGHT_SENSOR_1,INPUT);
-  pinMode(LIGHT_SENSOR_2,INPUT);
-  
+  pinMode(LIGHT_SENSOR_1, INPUT);
+  pinMode(LIGHT_SENSOR_2, INPUT);
+
 }
 
-void setupPotentiometer(){
+void setupPotentiometer() {
 
-  pinMode(POTENTIOMETER,INPUT);
-  
+  pinMode(POTENTIOMETER, INPUT);
+
 }
 
 
@@ -131,31 +131,31 @@ void handleRFID() {
 
   if (status == MI_OK) {
 
-//    Serial.println("RFID tag detected");
-//    Serial.print("Tag Type:\t\t");
+    //    Serial.println("RFID tag detected");
+    //    Serial.print("Tag Type:\t\t");
     uint tagType = str[0] << 8;
     tagType = tagType + str[1];
 
-//    switch (tagType) {
-//      case 0x4400:
-//        Serial.println("Mifare UltraLight");
-//        break;
-//      case 0x400:
-//        Serial.println("Mifare One (S50)");
-//        break;
-//      case 0x200:
-//        Serial.println("Mifare One (S70)");
-//        break;
-//      case 0x800:
-//        Serial.println("Mifare Pro (X)");
-//        break;
-//      case 0x4403:
-//        Serial.println("Mifare DESFire");
-//        break;
-//      default:
-//        Serial.println("Unknown");
-//        break;
-//    }
+    //    switch (tagType) {
+    //      case 0x4400:
+    //        Serial.println("Mifare UltraLight");
+    //        break;
+    //      case 0x400:
+    //        Serial.println("Mifare One (S50)");
+    //        break;
+    //      case 0x200:
+    //        Serial.println("Mifare One (S70)");
+    //        break;
+    //      case 0x800:
+    //        Serial.println("Mifare Pro (X)");
+    //        break;
+    //      case 0x4403:
+    //        Serial.println("Mifare DESFire");
+    //        break;
+    //      default:
+    //        Serial.println("Unknown");
+    //        break;
+    //    }
   }
 
   //Anti-collision, return tag serial number 4 bytes
@@ -163,19 +163,19 @@ void handleRFID() {
   if (status == MI_OK) {
 
     checksum1 = str[0] ^ str[1] ^ str[2] ^ str[3];
-//    Serial.print("The tag's number is:\t");
-//    Serial.print(str[0]);
-//    Serial.print(" , ");
-//    Serial.print(str[1]);
-//    Serial.print(" , ");
-//    Serial.print(str[2]);
-//    Serial.print(" , ");
-//    Serial.println(str[3]);
-//
-//    Serial.print("Read Checksum:\t\t");
-//    Serial.println(str[4]);
-//    Serial.print("Calculated Checksum:\t");
-//    Serial.println(checksum1);
+    //    Serial.print("The tag's number is:\t");
+    //    Serial.print(str[0]);
+    //    Serial.print(" , ");
+    //    Serial.print(str[1]);
+    //    Serial.print(" , ");
+    //    Serial.print(str[2]);
+    //    Serial.print(" , ");
+    //    Serial.println(str[3]);
+    //
+    //    Serial.print("Read Checksum:\t\t");
+    //    Serial.println(str[4]);
+    //    Serial.print("Calculated Checksum:\t");
+    //    Serial.println(checksum1);
 
 
     String tagId = "";
@@ -184,19 +184,19 @@ void handleRFID() {
     tagId.concat(str[2]);
     tagId.concat(str[3]);
 
-    if(!prevTagId.equals(tagId)){
-      Serial.println("tagId:" + tagId);  
+    if (!prevTagId.equals(tagId)) {
+      Serial.println("tagId:" + tagId);
       prevTagId = tagId;
     }
-    
 
 
-//    Serial.println();
-//    delay(1000);
+
+    //    Serial.println();
+    //    delay(1000);
   }
 
   //Todo; revisar si este halt afecta el performance del sensor.
-//  myRFID.AddicoreRFID_Halt();      //Command tag into hibernation
+  //  myRFID.AddicoreRFID_Halt();      //Command tag into hibernation
 
 }
 
@@ -206,10 +206,10 @@ void handleLightSensors() {
 
     int lightValue1 = analogRead(LIGHT_SENSOR_1);
     int lightValue2 = analogRead(LIGHT_SENSOR_2);
-    
-    
-//    Serial.println(lightValue2);
-    
+
+
+    //    Serial.println(lightValue2);
+
 
     if (lightValue1 > LIGHT_INTENSITY_THRESHOLD) {
       if (accumulatorLight1 < LIGHT_MAX_ACCUMULATION) accumulatorLight1++;
@@ -222,18 +222,48 @@ void handleLightSensors() {
     } else {
       if (accumulatorLight2 > 0) accumulatorLight2--;
     }
-    
+
+
+
+    //    if (accumulatorLight1 > accumulatorLight2) {
+    //
+    //      String light1Msg = "light1:" + String(accumulatorLight1);
+    //      Serial.println(light1Msg);
+    //
+    //    } else if (accumulatorLight1 < accumulatorLight2) {
+    //
+    //      String light2Msg = "light2:" + String(accumulatorLight2);
+    //      Serial.println(light2Msg);
+    //
+    //    }
+
+    //    if (lightValue1 > lightValue2) {
+    //
+    //      String light1Msg = "light1:" + String(accumulatorLight1);
+    //      Serial.println(light1Msg);
+    //
+    //    } else if (lightValue1 < lightValue2) {
+    //
+    //      String light2Msg = "light2:" + String(accumulatorLight2);
+    //      Serial.println(light2Msg);
+    //
+    //    }
+
     loopCount = 0;
+
+    String light1Msg = "light1:" + String(accumulatorLight1);
+    Serial.println(light1Msg);
+
+    String light2Msg = "light2:" + String(accumulatorLight2);
+    Serial.println(light2Msg);
+
   }
 
 
   loopCount++;
 
-  String light1Msg = "light1:"+String(accumulatorLight1);
-  String light2Msg = "light2:"+String(accumulatorLight2);
 
-  Serial.println(light1Msg);
-  Serial.println(light2Msg);
+
 
 
 
@@ -241,12 +271,12 @@ void handleLightSensors() {
 
 
 
-void handlePotentiometer(){
+void handlePotentiometer() {
 
   int potentiometerReading = analogRead(POTENTIOMETER);
 
-  String potMsg = "pot:"+String(potentiometerReading);
+  String potMsg = "pot:" + String(potentiometerReading);
   Serial.println(potMsg);
 
-  
+
 }
