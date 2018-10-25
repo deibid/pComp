@@ -21,12 +21,13 @@ const LIGHT_MAX_ACCUMULATION = 100;
 
 let mSprite;
 let mWallManager;
-
+let mGatesPassed = 0;
+let TOTAL_GATES_TO_WIN = 3;
 
 // Up and Down Bounds
 let mWallTop;
 let mWallBottom;
-
+let mLeftWall;
 
 // let mCurrentSpriteColor = 0;
 
@@ -51,7 +52,24 @@ let CommandEnum = { "rfid": "tagId", "light1": "light1", "light2": "light2", "po
 Object.freeze(CommandEnum);
 
 
+let mSceneCounter = 0;
+let mSceneBackgrounds = [];
 
+const GATE_STATE_NONE = "none";
+const GATE_STATE_PASSING = "passing";
+const GATE_STATE_PASSED = "passed";
+
+
+
+function preload(){
+
+    mSceneBackgrounds.push(loadImage('img/start.jpg'));
+    mSceneBackgrounds.push(loadImage('img/story_1.jpg'));
+    mSceneBackgrounds.push(loadImage('img/controls_1.jpg'));
+    mSceneBackgrounds.push(loadImage('img/controls_2.jpg'));
+    mSceneBackgrounds.push(loadImage('img/win.jpg'));
+    mSceneBackgrounds.push(loadImage('img/try_again.jpg'));
+}
 
 
 function setup() {
@@ -112,6 +130,7 @@ function serialEvent() {
     //pot values   pot:#
     //light1       light1:#
     //light2       light2:#
+
     if(mGameState != StateEnum.playing) return;
 
     mData = mSerial.readLine();
@@ -174,6 +193,10 @@ function initializeSketch() {
 
     mWallBottom = createSprite(windowWidth / 2, windowHeight + 30 / 2, windowWidth, 30);
     mWallBottom.immovable = true;
+
+    // mLeftWall = createSprite(0,-30/2,30,windowHeight);
+    // mLeftWall.immovable = true;
+
 }
 
 keyPressed = function () {
@@ -202,8 +225,6 @@ keyPressed = function () {
 }
 
 
-
-
 function Wall(speed) {
     this.wall = createSprite(windowWidth, windowHeight / 2, 20, windowHeight);
     this.wall.velocity.x = speed;
@@ -212,8 +233,9 @@ function Wall(speed) {
     this.gateHeight = 100;
     this.gateYPos = this.generateRandomGatePosition();
     this.gate = createSprite(windowWidth, this.gateYPos / 2, 25, this.gateHeight);
-    this.gate.shapeColor = this.gateColor;
+    this.gate.shapeColor = (mGatesPassed === TOTAL_GATES_TO_WIN -1)? "#1E1E1E" :this.gateColor;
     this.gate.velocity.x = speed;
+    this.gateState = GATE_STATE_NONE; //"none","passing","passed"
 
 }
 
@@ -233,6 +255,9 @@ Wall.prototype.generateRandomGatePosition = function () {
 }
 
 
+Wall.prototype.setGateState = function(state){
+    this.gateState = state;
+}
 
 function WallManager() {
     this.walls = [];
@@ -296,9 +321,10 @@ function getRandomInt(max) {
 
 function showIntro() {
 
-    background(0, 200, 0);
-    text("Introduction", 500, 200);
-    text("press s", 300, 600);
+    mGatesPassed = 0;
+    imageMode(CORNERS);
+    image(mSceneBackgrounds[mSceneCounter],0,0,windowWidth,windowHeight);
+
 
 }
 
@@ -321,6 +347,7 @@ function playGame() {
 
     if (mSprite.position.x < 200) {
         mSprite.velocity.x = 0;
+        
     }
 
     let throughGate = false;
@@ -333,13 +360,29 @@ function playGame() {
             throughGate = true;
 
             if (mSprite.shapeColor === wall.gate.shapeColor) {
-                console.log("Color check pass");
+                console.log("Color check pass");                                    
+                wall.setGateState(GATE_STATE_PASSING);              
+
             } else {
                 console.log("Color check rejected");
                 mGameState = StateEnum.lose;
             }
 
         } else {
+            
+            if(wall.gateState === GATE_STATE_PASSING && isSpriteMovingForward()){
+                console.log("CLEARED");
+                wall.setGateState(GATE_STATE_PASSED);
+                wall.gate.shapeColor = "#1E1E1E";
+                mGatesPassed++;
+                if(mGatesPassed === TOTAL_GATES_TO_WIN) mGameState = StateEnum.win;
+                console.log("GATES PASSED: "+ mGatesPassed);
+            }else if(wall.gateState === GATE_STATE_PASSING && !isSpriteMovingForward()){
+                console.log("reversed");
+                wall.setGateState(GATE_STATE_NONE);
+
+            }
+
             throughGate = false;
         }
 
@@ -365,82 +408,95 @@ function playGame() {
     if (mSprite.collide(mWallTop) || mSprite.collide(mWallBottom)) {
         mSprite.velocity.y = 0;
     }
+
+    
 }
 
 
 function showWin() {
+
+    mSceneCounter = 0;
     clear();
-    background(100, 5, 20);
-    text("You win baby", 300, 300);
-    text("press s", 300, 600);
+    imageMode(CORNERS);
+    image(mSceneBackgrounds[4],0,0,windowWidth,windowHeight);
 
 }
 
 
 function showLose() {
+    
+    mSceneCounter = 0;
     clear();
-    background(0);
-    fill(255);
-    text("You lose", 300, 300);
-
-    text("press s", 300, 600);
+    imageMode(CORNERS);
+    image(mSceneBackgrounds[5],0,0,windowWidth,windowHeight);
 }
 
 
 
 
 function handleKeyPressesForIntro(keyCode) {
-
-    if (keyCode != 83) return;
-    clear();
-    initializeSketch();
-    mGameState = StateEnum.playing;
+    
+    // letter a  
+    if (keyCode != 65) return;
+    
+    if(mSceneCounter < 3){
+        mSceneCounter++;
+        showIntro();
+        
+    }else{
+        clear();
+        initializeSketch();
+        mGameState = StateEnum.playing;
+    }
+    
+    
 
 }
 
 function handleKeyPressesForPlayingGame(keyCode) {
 
     switch (keyCode) {
-        // case RIGHT_ARROW:
-        //     if (mSprite.position.x < 880) {
-        //         mSprite.velocity.x += 0.5;
-        //     } else {
-        //         mSprite.velocity.x = 0;
-        //     }
-        //     mWallManager.updateSpeed(-0.5);
+        case RIGHT_ARROW:
+            if (mSprite.position.x < 880) {
+                mSprite.velocity.x += 0.5;
+            } else {
+                mSprite.velocity.x = 0;
+            }
+            mWallManager.updateSpeed(-1);
 
-        //     break;
+            break;
 
-        // case LEFT_ARROW:
+        case LEFT_ARROW:
+            
+        // if(mGatesPassed === 0 )return;
+            if (mSprite.position.x > 200) {
+                mSprite.velocity.x -= 0.5;
+            } else {
+                mSprite.velocity.x = 0;
+            }
 
-        //     if (mSprite.position.x > 200) {
-        //         mSprite.velocity.x -= 0.5;
-        //     } else {
-        //         mSprite.velocity.x = 0;
-        //     }
+            mWallManager.updateSpeed(1);
 
-        //     mWallManager.updateSpeed(0.5);
+            break;
 
-        //     break;
+        case UP_ARROW:
+            mSprite.velocity.y -= 0.5;
+            break;
 
-        // case UP_ARROW:
-        //     mSprite.velocity.y -= 0.5;
-        //     break;
+        case DOWN_ARROW:
+            mSprite.velocity.y += 0.5;
+            break;
 
-        // case DOWN_ARROW:
-        //     mSprite.velocity.y += 0.5;
-        //     break;
+        'd'
+        case 68:
+            // mCurrentSpriteColor++;
 
-        // 'd'
-        // case 68:
-        //     mCurrentSpriteColor++;
+            // if(mCurrentSpriteColor === mColors.length)
+            //     mCurrentSpriteColor = 0;
 
-        //     if(mCurrentSpriteColor === mColors.length)
-        //         mCurrentSpriteColor = 0;
+            mSprite.shapeColor = getRandomColorFromEnum();
 
-        //     mSprite.shapeColor = mColors[mCurrentSpriteColor];
-
-        // break;
+        break;
 
     }
 
@@ -448,14 +504,14 @@ function handleKeyPressesForPlayingGame(keyCode) {
 
 function handleKeyPressesForWin(keyCode) {
 
-    if (keyCode != 83) return;
+    if (keyCode != 65) return;
     mGameState = StateEnum.intro;
 
 }
 
 
 function handleKeyPressesForLose(keyCode) {
-    if (keyCode != 83) return;
+    if (keyCode != 65) return;
     mGameState = StateEnum.intro;
 }
 
@@ -511,13 +567,6 @@ function moveSpriteBackward(lightValue){
 }
 // case LEFT_ARROW:
 
-    
-
-    
-
-
-
-
 
 
 function getRandomColorFromEnum() {
@@ -531,5 +580,12 @@ function getRandomColorFromEnum() {
 
     return ColorEnum[keys[index]];
 
+
+}
+
+
+function isSpriteMovingForward(){
+
+    return (mSprite.velocity.x >0 || mWallManager.wallsSpeed<0) ? true:false;
 
 }
