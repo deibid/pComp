@@ -22,7 +22,7 @@ const LIGHT_MAX_ACCUMULATION = 100;
 let mSprite;
 let mWallManager;
 let mGatesPassed = 0;
-let TOTAL_GATES_TO_WIN = 3;
+let TOTAL_GATES_TO_WIN = 8;
 
 // Up and Down Bounds
 let mWallTop;
@@ -30,6 +30,8 @@ let mWallBottom;
 let mLeftWall;
 
 // let mCurrentSpriteColor = 0;
+
+let mScoreboard;
 
 let ColorEnum = {
     "193734413": "#3d5afe",
@@ -54,6 +56,7 @@ Object.freeze(CommandEnum);
 
 let mSceneCounter = 0;
 let mSceneBackgrounds = [];
+let mSoundtrack;
 
 const GATE_STATE_NONE = "none";
 const GATE_STATE_PASSING = "passing";
@@ -69,12 +72,17 @@ function preload(){
     mSceneBackgrounds.push(loadImage('img/controls_2.jpg'));
     mSceneBackgrounds.push(loadImage('img/win.jpg'));
     mSceneBackgrounds.push(loadImage('img/try_again.jpg'));
+
+    mSoundtrack = loadSound("sound/soundtrack.mp3");
+    mSoundtrack.setLoop(true);
+
+
 }
 
 
 function setup() {
 
-
+    mSoundtrack.play();
 
     mSerial = new p5.SerialPort();
     mSerial.on('list', getPortList);
@@ -178,6 +186,8 @@ function initializeSketch() {
     this.allSprites.clear();
 
 
+    
+
 
     mSprite = createSprite(200, windowHeight / 2, 20, 20);
     mSprite.setDefaultCollider();
@@ -201,7 +211,7 @@ function initializeSketch() {
 
 keyPressed = function () {
 
-    console.log("KEYCODE: " + keyCode);
+    // console.log("KEYCODE: " + keyCode);
 
     switch (mGameState) {
         case StateEnum.intro:
@@ -332,9 +342,11 @@ function showIntro() {
 
 function playGame() {
 
-    background("#EcEcEc");
+    background("#434343");
     drawSprites();
 
+    textSize(30);
+    text("Portals: "+mGatesPassed+" / "+TOTAL_GATES_TO_WIN,100,100);
 
 
     if (mWallManager.shouldCreateNewWall()) {
@@ -356,29 +368,29 @@ function playGame() {
 
 
         if (mSprite.overlap(wall.gate)) {
-            console.log("COllide with gate (color check)");
+            // console.log("COllide with gate (color check)");
             throughGate = true;
 
             if (mSprite.shapeColor === wall.gate.shapeColor) {
-                console.log("Color check pass");                                    
+                // console.log("Color check pass");                                    
                 wall.setGateState(GATE_STATE_PASSING);              
 
             } else {
-                console.log("Color check rejected");
+                // console.log("Color check rejected");
                 mGameState = StateEnum.lose;
             }
 
         } else {
             
             if(wall.gateState === GATE_STATE_PASSING && isSpriteMovingForward()){
-                console.log("CLEARED");
+                // console.log("CLEARED");
                 wall.setGateState(GATE_STATE_PASSED);
                 wall.gate.shapeColor = "#1E1E1E";
                 mGatesPassed++;
                 if(mGatesPassed === TOTAL_GATES_TO_WIN) mGameState = StateEnum.win;
-                console.log("GATES PASSED: "+ mGatesPassed);
+                // console.log("GATES PASSED: "+ mGatesPassed);
             }else if(wall.gateState === GATE_STATE_PASSING && !isSpriteMovingForward()){
-                console.log("reversed");
+                // console.log("reversed");
                 wall.setGateState(GATE_STATE_NONE);
 
             }
@@ -389,7 +401,7 @@ function playGame() {
 
         if (!throughGate) {
             if (mSprite.collide(wall.wall)) {
-                console.log("Collide with wall (Lose)");
+                // console.log("Collide with wall (Lose)");
                 mWallManager.stopEverything();
                 mSprite.velocity.x = 0;
                 mGameState = StateEnum.lose;
@@ -572,7 +584,7 @@ function moveSpriteBackward(lightValue){
 function getRandomColorFromEnum() {
 
     Object.keys(ColorEnum).forEach(key => {
-        console.log("KEY: " + key);
+        // console.log("KEY: " + key);
     })
 
     let keys = Object.keys(ColorEnum);

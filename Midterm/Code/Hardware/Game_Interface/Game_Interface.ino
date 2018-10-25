@@ -32,7 +32,7 @@ String prevTagId = "";
 const int LIGHT_SENSOR_1 = A0;
 const int LIGHT_SENSOR_2 = A1;
 
-const int LIGHT_INTENSITY_THRESHOLD = 150;
+const int LIGHT_INTENSITY_THRESHOLD = 100;
 const int LIGHT_MAX_ACCUMULATION = 100;
 
 int loopCount = 0;
